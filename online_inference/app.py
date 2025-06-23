@@ -77,6 +77,21 @@ def is_ready():
     )
 
 
+@app.post("/will_it_rain", response_model=OutputData)
+def will_it_rain(request: InputData):
+    data = get_data(request) # Парсим данные из запроса в DataFrame
+    logger.info(msg=f"Forecast data loaded")
+    try:
+        y_pred = model_lgbm.predict_proba(data)[:, 1] # Получаем предикт
+        y_pred = (y_pred > 0.6).astype(int).tolist() 
+        print(y_pred)
+    except Exception as e:
+        raise HTTPException( # Если что-то идёт не так, выдаём ошибку и код 500
+            status_code=500,
+            detail="Error: something went wrong while prediction")
+
+    logger.info(msg=f"Prediction finished. It's OK :) {y_pred}")
+    return OutputData(predicted_values=y_pred) # Возвращаем результат
 
 
 # Функция, срабатывающая при ошибке
